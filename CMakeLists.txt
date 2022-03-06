@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(CppProjectTemplate)
+project(VideoStreamer)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -22,8 +22,8 @@ executable(${PROJECT_NAME}
             SOURCES "src/"
             THREADS
             CONAN_MODULES
-            #BOOST system
-            MODULES pugixml GSL)
+            BOOST program_options
+            MODULES GSL http_streamer)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

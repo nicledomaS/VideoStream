@@ -1,50 +1,77 @@
-#include "pugixml.hpp"
-#include "zlib.h"
+#include "StreamController.h"
+#include "HttpStreamServer.h"
+#include "FFmpegInput.h"
+#include "FFmpeg.h"
+#include "Input.h"
+
+#include <toml.hpp>
 
 #include <gsl/gsl>
+
+#include <boost/program_options.hpp>
 
 #include <chrono>
 #include <thread>
 #include <iostream>
 
-void print(gsl::not_null<int*> value);
+namespace program_opt = boost::program_options;
+
+constexpr auto Help = "help";
+constexpr auto Config = "config";
 
 int main (int argc, char** argv)
 {
-    std::cout << "Start program" << std::endl;
-
-    pugi::xml_document doc;
-
-    int* first = new int(5);
-    int* second = nullptr;
-    
-    int ret, flush;
-    unsigned have;
-    z_stream strm;
-    unsigned char in[100];
-    unsigned char out[100];
-
-     /* allocate deflate state */
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    ret = deflateInit(&strm, 5);
-    if (ret != Z_OK)
-        return ret;
-
-    while(true)
+    try
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        print(first);
-        print(second);
+        program_opt::options_description desc("Allowed options");
+        desc.add_options()
+        (Help, "produce help message")
+        (Config, program_opt::value<std::string>(), "set config file");
+
+        program_opt::variables_map varMap;
+        program_opt::store(program_opt::parse_command_line(argc, argv, desc), varMap);
+        program_opt::notify(varMap);
+
+        if (varMap.count(Help) || !varMap.count(Config)) {
+            std::cout << desc << "\n";
+            return 0;
+        }
+
+        std::cout << "Start program" << std::endl;
+
+        auto config = varMap[Config].as<std::string>();
+        auto data = toml::parse(config);
+        const auto& http_streamer = toml::find(data, "http_streamer");
+        const auto url = toml::find<std::string>(http_streamer, "url");
+
+        avdevice_register_all();
+
+        auto streamController = std::make_shared<video_streamer::StreamController>();
+        auto streamServer = video_streamer::createHttpStreamServer(url, streamController);
+
+        const auto& inputs = toml::find(data, "inputs");
+        const auto items = toml::find<std::vector<Input>>(inputs, "items");
+
+        for(const auto& input : items)
+        {
+            std::cout << input.id << " " << input.url << std::endl;
+            auto inputStream = video_streamer::CreateFFmpegInput(input.id, input.url, input.hwName, input.hwId);
+            streamController->addInputStream(input.id, std::move(inputStream));
+        }
+
+        while(true)
+        {
+            streamServer->run();
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    catch(...)
+    {
+        std::cerr << "Exception of unknown type!" << std::endl;
     }
 
-    delete first;
-
     return 0;
-}
-
-void print(gsl::not_null<int*> value)
-{
-    std::cout << *value << std::endl;
 }
