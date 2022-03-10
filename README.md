@@ -1,7 +1,7 @@
 [![License][license-image]][license-url]
 
-# CppProjectTemplate
-C++ project template
+# VideoStream
+http streamer
 
 ## Build project
 `cmake -B build -DFIND_MODULES=ON -DFIND_CONAN=ON -DFIND_TESTS=ON -DENABLE_TIDY=ON`
