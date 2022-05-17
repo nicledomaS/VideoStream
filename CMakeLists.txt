@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(VideoStreamer)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(WIN32)
@@ -21,7 +21,7 @@ endif()
 executable(${PROJECT_NAME}
             SOURCES "src/"
             THREADS
-            CONAN_MODULES
+            CONAN_MODULES toml11 ffmpeg
             BOOST program_options
             MODULES GSL http_streamer)
 

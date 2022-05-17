@@ -7,6 +7,7 @@
 #include <thread>
 
 struct AVFormatContext;
+struct AVCodecContext;
 struct SwsContext;
 struct AVFrame;
 
@@ -18,7 +19,7 @@ class FrameEncoder;
 class FFmpegInput: public InputStream
 {
 public:
-	FFmpegInput(AVFormatContext* formatContext, SwsContext* swsContext, const std::string& id) noexcept;
+	FFmpegInput(AVFormatContext* formatContext, AVCodecContext* codecContext, SwsContext* swsContext, const std::string& id) noexcept;
 	~FFmpegInput() noexcept;
 
 	void start() override;
@@ -41,6 +42,7 @@ private:
 	FFmpegInput& operator=(FFmpegInput&& rhs) = delete;
 
 	AVFormatContext* m_formatContext;
+	AVCodecContext* m_codecContext;
 	SwsContext* m_swsContext;
 	std::string m_id;
 	std::function<void(const std::string&, const AVFrame*)> m_notify;

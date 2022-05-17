@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <memory>
 
 namespace video_streamer
 {
@@ -70,7 +71,6 @@ namespace
 		return fContext;
 	}
 
-
 	AVCodecContext* getCodecContext(AVFormatContext* fContext, AVCodec** dec, int& streamId)
 	{
 		streamId = av_find_best_stream(fContext, AVMEDIA_TYPE_VIDEO, -1, -1, dec, 0);
@@ -82,47 +82,47 @@ namespace
 		return fContext->streams[streamId]->codec;
 	}
 
-	static enum AVPixelFormat FindPixFmt(const enum AVHWDeviceType type)
-	{
-		enum AVPixelFormat fmt;
-		switch (type) {
-		case AV_HWDEVICE_TYPE_CUDA:
-			fmt = AV_PIX_FMT_CUDA;
-			break;
-		case AV_HWDEVICE_TYPE_VAAPI:
-			fmt = AV_PIX_FMT_VAAPI;
-			break;
-		case AV_HWDEVICE_TYPE_DXVA2:
-			fmt = AV_PIX_FMT_NV12;
-			break;
-		case AV_HWDEVICE_TYPE_D3D11VA:
-			fmt = AV_PIX_FMT_NV12;
-			break;
-		case AV_HWDEVICE_TYPE_VDPAU:
-			fmt = AV_PIX_FMT_VDPAU;
-			break;
-		case AV_HWDEVICE_TYPE_VIDEOTOOLBOX:
-			fmt = AV_PIX_FMT_VIDEOTOOLBOX;
-			break;
-		default:
-			fmt = AV_PIX_FMT_NONE;
-			break;
-		}
-		return fmt;
-	}
+	// static AVPixelFormat FindPixFmt(const AVHWDeviceType type)
+	// {
+	// 	enum AVPixelFormat fmt;
+	// 	switch (type) {
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_CUDA:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_CUDA;
+	// 		break;
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_VAAPI:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_VAAPI;
+	// 		break;
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_DXVA2:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_NV12;
+	// 		break;
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_NV12;
+	// 		break;
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_VDPAU:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_VDPAU;
+	// 		break;
+	// 	case AVHWDeviceType::AV_HWDEVICE_TYPE_VIDEOTOOLBOX:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_VIDEOTOOLBOX;
+	// 		break;
+	// 	default:
+	// 		fmt = AVPixelFormat::AV_PIX_FMT_NONE;
+	// 		break;
+	// 	}
+	// 	return fmt;
+	// }
 
-	bool isHWPixFmt(const enum AVPixelFormat pixFmt)
+	bool isHWPixFmt(const AVPixelFormat pixFmt)
 	{
-		enum AVPixelFormat fmt;
 		switch (pixFmt) {
-		case AV_PIX_FMT_VAAPI:
-		case AV_PIX_FMT_DXVA2_VLD:
-		case AV_PIX_FMT_D3D11:
-		case AV_PIX_FMT_VDPAU:
-		case AV_PIX_FMT_VIDEOTOOLBOX:
-			return true;
+			case AVPixelFormat::AV_PIX_FMT_VAAPI:
+			case AVPixelFormat::AV_PIX_FMT_DXVA2_VLD:
+			case AVPixelFormat::AV_PIX_FMT_D3D11:
+			case AVPixelFormat::AV_PIX_FMT_VDPAU:
+			case AVPixelFormat::AV_PIX_FMT_VIDEOTOOLBOX:
+				return true;
+			default:
+				return false;
 		}
-		return false;
 	}
 
 	AVBufferRef* createHwContext(AVHWDeviceType deviceType, int id)
@@ -157,11 +157,27 @@ namespace
 		return true;
 	}
 
+	void avPacketFree(AVPacket* ptr)
+	{
+		av_packet_unref(ptr);
+		av_packet_free(&ptr);
+	}
+
+	using AVPacketUnique = std::unique_ptr<AVPacket, decltype(&avPacketFree)>;
+
+	AVPacketUnique makeAVPacket()
+	{
+		AVPacketUnique packet(nullptr, &avPacketFree);
+		packet.reset(av_packet_alloc());
+
+		return packet;
+	}
+
 } // anonymous
 
 std::unique_ptr<FFmpegInput> CreateFFmpegInput(const std::string& inputId, const std::string& url, const std::string& hwName, int id) noexcept
 {
-	auto fContext = createCamFormatContext(url);
+auto fContext = createCamFormatContext(url);
 	if (!fContext)
 	{
 		return nullptr;
@@ -179,7 +195,7 @@ std::unique_ptr<FFmpegInput> CreateFFmpegInput(const std::string& inputId, const
 		avformat_free_context(fContext);
 		return nullptr;
 	}
-	auto pixFmt = deviceType != AVHWDeviceType::AV_HWDEVICE_TYPE_NONE ? FindPixFmt(deviceType) : codecContext->pix_fmt;
+	// auto pixFmt = deviceType != AVHWDeviceType::AV_HWDEVICE_TYPE_NONE ? FindPixFmt(deviceType) : codecContext->pix_fmt;
 	// SwsContext* swsContext = sws_getContext(
 	// 	codecContext->width,
 	// 	codecContext->height,
@@ -188,12 +204,13 @@ std::unique_ptr<FFmpegInput> CreateFFmpegInput(const std::string& inputId, const
 	// 	codecContext->height,
 	// 	AV_PIX_FMT_BGR24,
 	// 	SWS_BICUBIC, NULL, NULL, NULL);
-std::cout << "FFmpegInput will be created" << std::endl;
-	return std::make_unique<FFmpegInput>(fContext, nullptr, inputId);
+	// std::cout << "FFmpegInput will be created" << std::endl;
+	return std::make_unique<FFmpegInput>(fContext, codecContext, nullptr, inputId);
 }
 
-FFmpegInput::FFmpegInput(AVFormatContext* formatContext, SwsContext* swsContext, const std::string& id) noexcept
+FFmpegInput::FFmpegInput(AVFormatContext* formatContext, AVCodecContext* codecContext, SwsContext* swsContext, const std::string& id) noexcept
 	: m_formatContext(formatContext),
+	m_codecContext(codecContext),
 	m_swsContext(swsContext),
 	m_id(id),
 	m_isStarted(false)
@@ -217,49 +234,45 @@ FFmpegInput::~FFmpegInput() noexcept
 
 void FFmpegInput::start()
 {
-	assert(("m_thread is started", !m_thread.joinable()));
+	// auto test = ("m_thread is started", !m_thread.joinable());
+	// assert(test);
 
 	std::cout << "Start input stream" << std::endl;
 	
 
 	m_thread = std::thread([this](){
 		int streamId = 0;
-		AVCodec* decoder;
-		auto cContext = getCodecContext(m_formatContext, &decoder, streamId);
-
-		AVPacket packet;
-		av_init_packet(&packet);
 
 		av_read_play(m_formatContext);
 
 		auto* picture = av_frame_alloc();
 		auto* sw_frame = av_frame_alloc();
 		auto* picture_rgb = av_frame_alloc();
-		auto size2 = avpicture_get_size(AV_PIX_FMT_BGR24, cContext->width, cContext->height);
+		 
+		auto size2 = av_image_get_buffer_size(AVPixelFormat::AV_PIX_FMT_BGR24, m_codecContext->width, m_codecContext->height, 1);
 		auto* picture_buffer_2 = (uint8_t*)(av_malloc(size2));
-		avpicture_fill(
-			(AVPicture*)picture_rgb,
-			picture_buffer_2,
-			AV_PIX_FMT_BGR24,
-			cContext->width,
-			cContext->height);
+
+		av_image_fill_arrays(picture_rgb->data, picture_rgb->linesize, picture_buffer_2, AVPixelFormat::AV_PIX_FMT_BGR24, m_codecContext->width, m_codecContext->height, 1);
 
 		AVFrame* tmp_frame = nullptr;
 
+
 		m_isStarted = true;
 
-		while (av_read_frame(m_formatContext, &packet) >= 0 && m_isStarted)
+		auto packet = makeAVPacket();
+
+		while (av_read_frame(m_formatContext, packet.get()) >= 0 && m_isStarted)
 		{
-			if (packet.stream_index == streamId)
+			if (packet->stream_index == streamId)
 			{
-				auto ret = avcodec_send_packet(cContext, &packet);
+				auto ret = avcodec_send_packet(m_codecContext, packet.get());
 				if (ret < 0) {
 					av_log(NULL, AV_LOG_ERROR, "Error while sending a packet to the decoder\n");
 					break;
 				}
 				while (ret >= 0)
 				{
-					ret = avcodec_receive_frame(cContext, picture);
+					ret = avcodec_receive_frame(m_codecContext, picture);
 					if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
 						break;
 					}
@@ -300,7 +313,7 @@ void FFmpegInput::start()
 				}
 			}
 
-			av_packet_unref(&packet);
+			av_packet_unref(packet.get());
 		}
 
 		m_isStarted = false;
@@ -326,10 +339,7 @@ std::shared_ptr<FrameEncoder> FFmpegInput::GetFrameEncoder()
 {
 	if(!m_frameEncoder)
 	{
-		int streamId = 0;
-		AVCodec* decoder;
-		auto cContext = getCodecContext(m_formatContext, &decoder, streamId);
-		m_frameEncoder = createFrameEncoder("mjpeg", cContext);
+		m_frameEncoder = createFrameEncoder("mjpeg", m_codecContext);
 		if(!m_frameEncoder)
 		{
 			throw 1;
