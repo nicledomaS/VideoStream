@@ -8,7 +8,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 shared_library(${PROJECT_NAME}
     SOURCES "src/"
     THREADS
-    CONAN_MODULES
+    CONAN_MODULES ffmpeg
     #BOOST system
     MODULES GSL)
 

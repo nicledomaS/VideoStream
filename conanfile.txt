@@ -3,4 +3,7 @@ ffmpeg/4.4
 toml11/3.7.0
 
 [generators]
-cmake
+cmake_paths
+cmake_find_package
+
+[options]

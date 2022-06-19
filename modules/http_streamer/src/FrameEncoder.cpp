@@ -13,22 +13,29 @@ std::shared_ptr<FrameEncoder> createFrameEncoder(const std::string& encoderName,
 	AVCodecContext* encodecContext = avcodec_alloc_context3(encoder);
 	encodecContext->codec_id = AV_CODEC_ID_MJPEG;
 	encodecContext->codec_type = AVMEDIA_TYPE_VIDEO;
-	//encodecContext->bit_rate = codecContext->bit_rate;
+	encodecContext->sample_aspect_ratio  = codecContext->sample_aspect_ratio ;
 	encodecContext->bit_rate = 400000;
 	encodecContext->width = codecContext->width;
 	encodecContext->height = codecContext->height;
-	encodecContext->time_base = codecContext->time_base;
+	encodecContext->time_base = av_inv_q(codecContext->framerate);
+
+	std::cout << "createFrameEncoder coder time_base num: " << codecContext->time_base.num << std::endl;
+	std::cout << "createFrameEncoder coder time_base den: " << codecContext->time_base.den << std::endl;
+
+	std::cout << "createFrameEncoder encoder time_base num: " << encodecContext->time_base.num << std::endl;
+	std::cout << "createFrameEncoder encoder time_base den: " << encodecContext->time_base.den << std::endl;
 
 	auto codecName = avcodec_get_name(codecContext->codec_id);
 	std::cout << "createFrameEncoder codec name: " << codecName << std::endl;
 	std::cout << "createFrameEncoder encoder name: " << encoderName << std::endl;
-	if (encoderName == codecName)
+
+	if (encoder->pix_fmts)
 	{
-		encodecContext->pix_fmt = codecContext->pix_fmt;
+		encodecContext->pix_fmt = encoder->pix_fmts[0];
 	}
 	else
 	{
-		encodecContext->pix_fmt = AV_PIX_FMT_YUVJ420P;
+		encodecContext->pix_fmt = codecContext->pix_fmt;
 	}
 
     if(avcodec_open2(encodecContext, encoder, NULL) < 0)

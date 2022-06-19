@@ -49,7 +49,7 @@ namespace video_streamer
 
 	void HttpStreamSession::send(const std::vector<unsigned char>& img)
 	{
-		assert(("m_clientContext is not init", m_clientContext != nullptr));
+		// assert(("m_clientContext is not init", m_clientContext != nullptr));
 
 		std::string header =
 			"--myboundary\r\nContent-Type:image/jpeg\r\nContent-Length: " + std::to_string(img.size()) + "\r\n\r\n";
@@ -65,19 +65,12 @@ namespace video_streamer
 
 	void HttpStreamSession::connect()
 	{
-		assert(("m_clientContext has already connected", !m_isConnect));
+		// assert(("m_clientContext has already connected", !m_isConnect));
 
 		if (m_isConnect)
 		{
 			return;
 		}
-		
-		av_opt_set(m_clientContext, "headers", header, AV_OPT_SEARCH_CHILDREN);
-		av_opt_set(m_clientContext, "reconnect_at_eof", "1", AV_OPT_SEARCH_CHILDREN);
-		av_opt_set(m_clientContext, "reconnect_streamed", "1", AV_OPT_SEARCH_CHILDREN);
-		av_opt_set(m_clientContext, "multiple_requests", "1", AV_OPT_SEARCH_CHILDREN);
-		av_opt_set(m_clientContext, "content_type", contentType, AV_OPT_SEARCH_CHILDREN);
-		av_opt_set(m_clientContext, "chunked_post", "1", AV_OPT_SEARCH_CHILDREN);
 
 		av_opt_set_int(m_clientContext, "reply_code", 200, AV_OPT_SEARCH_CHILDREN);
 
