@@ -1,9 +1,10 @@
 [http_streamer]
-url = "https://192.168.1.144:5000"
+url = "http://192.168.1.144:5000"
 cert = "/home/pi/cert/kovalenko.crt"
 key = "/home/pi/cert/kovalenko.key"
+log_level = "DEBUG"
 
 [inputs]
 items = [ 
-    { id = "video1", type = "WebCamera", url = "/dev/video1", hw_name = "", hw_id = 0 }
+    { id = "video1", input_format = "v4l2", url = "/dev/video1", hw_name = "", hw_id = 0, options = { "video_size" = "1280x720", "framerate" = "10", "pixel_format" = "mjpeg" }}
 ]

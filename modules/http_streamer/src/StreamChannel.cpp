@@ -7,10 +7,13 @@
 namespace video_streamer
 {
 
-void StreamChannel::createGroup(const std::string& name, std::shared_ptr<FrameEncoder> frameEncoder)
+std::shared_ptr<GroupStreamSession> StreamChannel::createGroup(const std::string& name, std::shared_ptr<Encoder> frameEncoder)
 {
 	std::lock_guard lock(m_mtx);
-	m_sessions.insert({ name, std::make_shared<GroupStreamSession>(std::move(frameEncoder)) });
+	auto groupStream = std::make_shared<GroupStreamSession>(std::move(frameEncoder));
+	m_sessions.insert({ name, groupStream });
+
+	return groupStream;
 }
 
 void StreamChannel::removeGroup(const std::string& name)
@@ -33,18 +36,9 @@ void StreamChannel::addSession(const std::string& name, std::unique_ptr<StreamSe
 	}
 }
 
-void StreamChannel::notify(const std::string& name, const AVFrame* frame)
+bool StreamChannel::hasGroup(const std::string& name) const
 {
-	auto groupStream = findGroup(name);
-	if (groupStream)
-	{
-		groupStream->pushFrame(frame);
-	}
-	else
-	{
-		// log warn
-		std::cout << "notify: StreamGroup was not found" << std::endl;
-	}
+	return m_sessions.count(name);
 }
 
 std::shared_ptr<GroupStreamSession> StreamChannel::findGroup(const std::string& name)

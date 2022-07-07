@@ -1,6 +1,8 @@
 #pragma once
 
-#include <vector>
+#include <gsl/gsl>
+
+struct AVPacket;
 
 namespace video_streamer
 {
@@ -10,7 +12,7 @@ namespace video_streamer
 	public:
 		virtual ~StreamSession() = default;
 		virtual void connect() = 0;
-		virtual void send(const std::vector<unsigned char>& img) = 0;
+		virtual void send(gsl::not_null<AVPacket*> packet) = 0;
 		virtual bool isConnected() const noexcept = 0;
 	};
 

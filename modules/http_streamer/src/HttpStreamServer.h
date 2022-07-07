@@ -15,19 +15,19 @@ struct AVDictionary;
 namespace video_streamer
 {
 
-class StreamController;
+class StreamChannel;
 
 class HttpStreamServer: public StreamServer
 {
 public:
 	HttpStreamServer(
-		const std::string& url,	std::shared_ptr<StreamController> streamController) noexcept;
+		const std::string& url,	const std::shared_ptr<StreamChannel>& streamChannel) noexcept;
 		
 	HttpStreamServer(
 		const std::string& url,
 		const std::string& cert,
 		const std::string& key,
-		std::shared_ptr<StreamController> streamController) noexcept;
+		const std::shared_ptr<StreamChannel>& streamChannel) noexcept;
 
 	void run() override;
 
@@ -45,11 +45,8 @@ private:
 	std::string m_cert;
 	std::string m_key;
 	std::function<AVDictionary*()> m_optionsBuilder;
-	std::shared_ptr<StreamController> m_streamController;
+	std::shared_ptr<StreamChannel> m_streamChannel;
 	std::atomic_bool m_isStarted;
 };
-
-std::unique_ptr<HttpStreamServer> createHttpStreamServer(
-	const std::string& url, std::shared_ptr<StreamController> streamController);
 
 } // video_streamer

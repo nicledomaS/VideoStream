@@ -11,23 +11,20 @@ namespace video_streamer
 class InputStream;
 class StreamChannel;
 class StreamSession;
+class Worker;
     
 class StreamController
 {
 public:
-    StreamController();
+    explicit StreamController(const std::shared_ptr<StreamChannel>& streamChannel);
     ~StreamController();
 
     void addInputStream(const std::string& name, std::unique_ptr<InputStream> inputStream);
     void removeInputStream(const std::string& name);
 
-    void subscribe(const std::string& name, std::unique_ptr<StreamSession> streamSession);
-
-    bool hasInputStream(const std::string& name) const;
-
 private:
-    std::unordered_map<std::string, std::shared_ptr<InputStream>> m_inputStreams;
-    std::unique_ptr<StreamChannel> m_streamChannel;
+    std::unordered_map<std::string, std::unique_ptr<Worker>> m_inputStreams;
+    std::shared_ptr<StreamChannel> m_streamChannel;
 };
 
 } // video_streamer

@@ -5,11 +5,15 @@ project(http_streamer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-shared_library(${PROJECT_NAME}
+if(WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
+
+static_library(${PROJECT_NAME}
     SOURCES "src/"
     THREADS
-    CONAN_MODULES ffmpeg
-    #BOOST system
+    CONAN_MODULES toml11 ffmpeg
     MODULES GSL)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

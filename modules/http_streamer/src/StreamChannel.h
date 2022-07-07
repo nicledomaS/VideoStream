@@ -6,23 +6,20 @@
 #include <memory>
 #include <mutex>
 
-struct AVFrame;
-
 namespace video_streamer
 {
 
 	class GroupStreamSession;
 	class StreamSession;
-	class FrameEncoder;
+	class Encoder;
 
 	class StreamChannel
 	{
 	public:
-		void createGroup(const std::string& name, std::shared_ptr<FrameEncoder> frameEncoder);
+		std::shared_ptr<GroupStreamSession> createGroup(const std::string& name, std::shared_ptr<Encoder> frameEncoder);
 		void removeGroup(const std::string& name);
-
 		void addSession(const std::string& name, std::unique_ptr<StreamSession> session);
-		void notify(const std::string& name, const AVFrame* frame);
+		bool hasGroup(const std::string& name) const;
 
 	private:
 		std::shared_ptr<GroupStreamSession> findGroup(const std::string& name);
