@@ -13,4 +13,5 @@ extern "C" {
 #include <libavfilter/buffersrc.h>
 #include <libavfilter/buffersink.h>
 #include <libavdevice/avdevice.h>
+#include <libavutil/hwcontext.h>
 }

@@ -4,6 +4,7 @@
 #include <utility>
 #include <cassert>
 #include <string>
+#include <vector>
 
 namespace video_streamer
 {
@@ -47,19 +48,19 @@ namespace video_streamer
 		return *this;
 	}
 
-	void HttpStreamSession::send(const std::vector<unsigned char>& img)
+	void HttpStreamSession::send(gsl::not_null<AVPacket*> packet)
 	{
 		// assert(("m_clientContext is not init", m_clientContext != nullptr));
 
 		std::string header =
-			"--myboundary\r\nContent-Type:image/jpeg\r\nContent-Length: " + std::to_string(img.size()) + "\r\n\r\n";
+			"--myboundary\r\nContent-Type:image/jpeg\r\nContent-Length: " + std::to_string(packet->size) + "\r\n\r\n";
 
 		std::vector<unsigned char> buff;
 		buff.reserve(header.size());
 		buff.insert(buff.end(), header.begin(), header.end());
-		buff.insert(buff.end(), img.begin(), img.end());
+		buff.insert(buff.end(), packet->data, packet->data + packet->size);
 
-		avio_write(m_clientContext, buff.data(), buff.size());
+		avio_write(m_clientContext, buff.data(), static_cast<int>(buff.size()));
 		avio_flush(m_clientContext);
 	}
 

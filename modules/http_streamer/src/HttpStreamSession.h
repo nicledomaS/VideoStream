@@ -17,7 +17,7 @@ public:
 	HttpStreamSession& operator=(HttpStreamSession&& rhs) noexcept;
 
 	void connect() override;
-	void send(const std::vector<unsigned char>& img) override;
+	void send(gsl::not_null<AVPacket*> packet) override;
 	bool isConnected() const noexcept override;
 private:
 	HttpStreamSession(const HttpStreamSession&) = delete;

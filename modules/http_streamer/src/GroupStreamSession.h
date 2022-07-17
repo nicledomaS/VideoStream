@@ -1,29 +1,29 @@
 #pragma once
 
+#include "AVMemory.h"
+
 #include <gsl/gsl>
 
 #include <vector>
 #include <memory>
 #include <mutex>
 
-struct AVFrame;
-
 namespace video_streamer
 {
 
 class StreamSession;
-class FrameEncoder;
+class Encoder;
 
 class GroupStreamSession
 {
 public:
-    explicit GroupStreamSession(std::shared_ptr<FrameEncoder> frameEncoder);
+    explicit GroupStreamSession(std::shared_ptr<Encoder> frameEncoder);
 
     void addStream(std::unique_ptr<StreamSession> streamSession);
-    void pushFrame(gsl::not_null<const AVFrame*> frame);
+    void pushFrame(AVUniquePtr<AVFrame> frame);
 
 private:
-    std::shared_ptr<FrameEncoder> m_frameEncoder;
+    std::shared_ptr<Encoder> m_frameEncoder;
     std::vector<std::unique_ptr<StreamSession>> m_streamSession;
     mutable std::mutex m_mtx;
 };

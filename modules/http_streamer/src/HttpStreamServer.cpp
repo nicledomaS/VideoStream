@@ -1,6 +1,6 @@
 #include "HttpStreamServer.h"
 #include "HttpStreamSession.h"
-#include "StreamController.h"
+#include "StreamChannel.h"
 #include "FFmpeg.h"
 
 #include <utility>
@@ -77,10 +77,10 @@ namespace video_streamer
 	} // anonymous
 
 	HttpStreamServer::HttpStreamServer(
-		const std::string& url, std::shared_ptr<StreamController> streamController) noexcept
+		const std::string& url, const std::shared_ptr<StreamChannel>& streamChannel) noexcept
 		: m_url(url),
 		m_optionsBuilder([](){ return getHttpOptions(); }),
-		m_streamController(std::move(streamController)),
+		m_streamChannel(streamChannel),
 		m_isStarted(false)
 	{
 	}
@@ -89,12 +89,12 @@ namespace video_streamer
 		const std::string& url,
 		const std::string& cert,
 		const std::string& key,
-		std::shared_ptr<StreamController> streamController) noexcept
+		const std::shared_ptr<StreamChannel>& streamChannel) noexcept
 		: m_url(url),
 		m_cert(cert),
 		m_key(key),
 		m_optionsBuilder([this](){ return getHttpsOptions(m_cert, m_key); }),
-		m_streamController(std::move(streamController)),
+		m_streamChannel(streamChannel),
 		m_isStarted(false)
 	{
 	}
@@ -122,7 +122,7 @@ namespace video_streamer
 
 				auto name = resource.size() > 1 && resource[0] == '/' ? resource.substr(1, resource.size() - 1) : "";
 
-				if (!name.empty() && m_streamController->hasInputStream(name))
+				if (!name.empty() && m_streamChannel->hasGroup(name))
 				{
 					createHttpStreamSession(name, clientContext);
 				}
@@ -153,7 +153,7 @@ namespace video_streamer
 		session->connect();
 		if (session->isConnected())
 		{
-			m_streamController->subscribe(name, std::move(session));
+			m_streamChannel->addSession(name, std::move(session));
 		}
 		else
 		{
